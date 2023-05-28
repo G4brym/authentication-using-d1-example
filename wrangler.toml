@@ -1,0 +1,13 @@
+name = "d1-auth-example"
+main = "src/index.ts"
+compatibility_date = "2023-05-27"
+
+
+[[d1_databases]]
+binding = "DB"
+database_name = "test-v2"
+database_id = "b7909b0b-1a66-40a2-8233-66cccbfd584f"
+
+
+[vars]
+SALT_TOKEN = "sadfasdghjyt45645t"
