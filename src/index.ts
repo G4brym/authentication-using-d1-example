@@ -46,7 +46,8 @@ export default {
 	fetch: async (request, env, ctx) => {
 		// Inject query builder in every endpoint
 		const qb = new D1QB(env.DB)
-		qb.setDebugger(true)
+		// qb.setDebugger(true)
+
 		return router.handle(request, env, {...ctx, qb: qb})
 	},
 };

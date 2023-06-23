@@ -133,3 +133,4 @@ home-assistant.db
 node_modules
 .idea
 test.credentials
+.wrangler
