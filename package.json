@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@cloudflare/itty-router-openapi": "^0.1.9",
-    "workers-qb": "^0.1.12"
+    "workers-qb": "^1.0.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230404.0",

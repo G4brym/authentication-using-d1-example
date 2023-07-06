@@ -54,7 +54,7 @@ export class AuthRegister extends OpenAPIRoute {
                     password: await hashPassword(data.body.password, env.SALT_TOKEN),
                 },
                 returning: '*'
-            })
+            }).execute()
         } catch (e) {
             return new Response(JSON.stringify({
                 success: false,
@@ -124,9 +124,9 @@ export class AuthLogin extends OpenAPIRoute {
                     await hashPassword(data.body.password, env.SALT_TOKEN)
                 ]
             },
-        })
+        }).execute()
 
-        if (!user.results) {
+        if (user.results.length === 0) {
             return new Response(JSON.stringify({
                 success: false,
                 errors: "Unknown user"
@@ -149,7 +149,7 @@ export class AuthLogin extends OpenAPIRoute {
                 expires_at: expiration.getTime()
             },
             returning: '*'
-        })
+        }).execute()
 
         return {
             success: true,
@@ -191,7 +191,7 @@ export async function authenticateUser(request: Request, env: any, context: any)
                     new Date().getTime()
                 ]
             },
-        })
+        }).execute()
     }
 
     if (!token || !session.results) {
