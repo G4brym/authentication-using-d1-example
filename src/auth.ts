@@ -126,7 +126,7 @@ export class AuthLogin extends OpenAPIRoute {
             },
         }).execute()
 
-        if (user.results.length === 0) {
+        if (!user.results) {
             return new Response(JSON.stringify({
                 success: false,
                 errors: "Unknown user"
