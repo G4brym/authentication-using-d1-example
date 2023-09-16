@@ -7,14 +7,7 @@ export const router = OpenAPIRouter({
 	schema: {
 		info: {
 			title: "Authentication using D1",
-		},
-		components: {
-			securitySchemes: {
-				bearerAuth: {
-					type: 'http',
-					scheme: 'bearer',
-				},
-			},
+			version: '1.0',
 		},
 		security: [
 			{
@@ -24,6 +17,11 @@ export const router = OpenAPIRouter({
 	},
 	docs_url: "/",
 });
+
+router.registry.registerComponent('securitySchemes', 'bearerAuth', {
+	type: 'http',
+	scheme: 'bearer',
+})
 
 // 1. Endpoints that don't require Auth
 router.post('/api/auth/register', AuthRegister);

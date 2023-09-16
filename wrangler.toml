@@ -5,8 +5,8 @@ compatibility_date = "2023-05-18"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "<your-db-name>"
-database_id = "<your-db-id>"
+database_name = "your-db-name"
+database_id = "your-db-id"
 
 
 [vars]

@@ -1,4 +1,5 @@
 import {Email, OpenAPIRoute} from '@cloudflare/itty-router-openapi';
+import {z} from 'zod'
 
 
 async function hashPassword(password: string, salt: string): Promise<string> {
@@ -6,10 +7,9 @@ async function hashPassword(password: string, salt: string): Promise<string> {
 
     const hashBuffer = await crypto.subtle.digest({name: 'SHA-256'}, utf8);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
+    return hashArray
         .map((bytes) => bytes.toString(16).padStart(2, '0'))
         .join('');
-    return hashHex;
 }
 
 export class AuthRegister extends OpenAPIRoute {
@@ -19,10 +19,11 @@ export class AuthRegister extends OpenAPIRoute {
         requestBody: {
             name: String,
             email: new Email(),
-            password: String,  // TODO: set min length and max
+            password: z.string().min(8).max(16),
         },
         responses: {
             '200': {
+                description: "Successful response",
                 schema: {
                     success: Boolean,
                     result: {
@@ -86,10 +87,11 @@ export class AuthLogin extends OpenAPIRoute {
         summary: 'Login user',
         requestBody: {
             email: new Email(),
-            password: String,  // TODO: set min length and max
+            password: z.string().min(8).max(16),
         },
         responses: {
             '200': {
+                description: "Successful response",
                 schema: {
                     success: Boolean,
                     result: {
