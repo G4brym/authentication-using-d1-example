@@ -1,4 +1,6 @@
 import {OpenAPIRoute, Query,} from "@cloudflare/itty-router-openapi";
+import {Env} from "./bindings";
+import {Context} from "./interfaces";
 
 export class GetSearch extends OpenAPIRoute {
     static schema = {
@@ -35,7 +37,7 @@ export class GetSearch extends OpenAPIRoute {
         },
     };
 
-    async handle(request: Request, env, ctx, data: Record<string, any>) {
+    async handle(request: Request, env: Env, context: Context, data: Record<string, any>) {
         const url = `https://api.github.com/search/repositories?q=${data.query.q}`;
 
         const resp = await fetch(url, {

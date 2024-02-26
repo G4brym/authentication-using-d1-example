@@ -1,5 +1,7 @@
 import {Email, OpenAPIRoute} from '@cloudflare/itty-router-openapi';
 import {z} from 'zod'
+import {Env} from "./bindings";
+import {Context} from "./interfaces";
 
 
 async function hashPassword(password: string, salt: string): Promise<string> {
@@ -44,7 +46,7 @@ export class AuthRegister extends OpenAPIRoute {
         },
     };
 
-    async handle(request: Request, env: any, context: any, data: Record<string, any>) {
+    async handle(request: Request, env: Env, context: Context, data: Record<string, any>) {
         let user
         try {
             user = await context.qb.insert({
@@ -112,7 +114,7 @@ export class AuthLogin extends OpenAPIRoute {
         },
     };
 
-    async handle(request: Request, env: any, context: any, data: Record<string, any>) {
+    async handle(request: Request, env: Env, context: Context, data: Record<string, any>) {
         const user = await context.qb.fetchOne({
             tableName: 'users',
             fields: '*',

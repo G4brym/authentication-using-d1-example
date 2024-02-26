@@ -2,6 +2,7 @@ import { OpenAPIRouter } from "@cloudflare/itty-router-openapi";
 import { GetSearch } from "./search";
 import {authenticateUser, AuthLogin, AuthRegister} from "./auth";
 import {D1QB} from "workers-qb";
+import { Env } from "./bindings";
 
 export const router = OpenAPIRouter({
 	schema: {
@@ -41,11 +42,14 @@ router.all("*", () => new Response("Not Found.", { status: 404 }));
 
 
 export default {
-	fetch: async (request, env, ctx) => {
+	fetch: async (request: Request, env: Env, executionContext: ExecutionContext) => {
 		// Inject query builder in every endpoint
 		const qb = new D1QB(env.DB)
 		// qb.setDebugger(true)
 
-		return router.handle(request, env, {...ctx, qb: qb})
+		return router.handle(request, env, {
+			executionContext: executionContext,
+			qb: qb
+		})
 	},
 };
