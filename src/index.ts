@@ -1,55 +1,47 @@
-import { OpenAPIRouter } from "@cloudflare/itty-router-openapi";
-import { GetSearch } from "./search";
+import {GetSearch} from "./search";
 import {authenticateUser, AuthLogin, AuthRegister} from "./auth";
-import {D1QB} from "workers-qb";
-import { Env } from "./bindings";
+import {Hono} from "hono";
+import {fromHono} from "chanfana";
+import {Bindings} from "./types";
 
-export const router = OpenAPIRouter({
-	schema: {
-		info: {
-			title: "Authentication using D1",
-			version: '1.0',
-		},
-		security: [
-			{
-				bearerAuth: [],
-			},
-		],
-	},
-	docs_url: "/",
-});
+// Start a Hono app
+const app = new Hono<{ Bindings: Bindings }>()
 
-router.registry.registerComponent('securitySchemes', 'bearerAuth', {
-	type: 'http',
-	scheme: 'bearer',
+// Setup OpenAPI registry
+const openapi = fromHono(app, {
+    schema: {
+        info: {
+            title: "Authentication using D1",
+            version: '1.0',
+        },
+        security: [
+            {
+                bearerAuth: [],
+            },
+        ],
+    },
+    docs_url: "/",
+})
+openapi.registry.registerComponent('securitySchemes', 'bearerAuth', {
+    type: 'http',
+    scheme: 'bearer',
 })
 
 // 1. Endpoints that don't require Auth
-router.post('/api/auth/register', AuthRegister);
-router.post('/api/auth/login', AuthLogin);
+openapi.post('/api/auth/register', AuthRegister);
+openapi.post('/api/auth/login', AuthLogin);
 
 
 // 2. Authentication middleware
-router.all('/api/*', authenticateUser)
+openapi.use('/api/*', authenticateUser)
 
 
 // 3. Endpoints that require Auth
-router.get("/api/search", GetSearch);
+openapi.get("/api/search", GetSearch);
 
 
 // 404 for everything else
-router.all("*", () => new Response("Not Found.", { status: 404 }));
+openapi.all("*", () => new Response("Not Found.", {status: 404}));
 
-
-export default {
-	fetch: async (request: Request, env: Env, executionContext: ExecutionContext) => {
-		// Inject query builder in every endpoint
-		const qb = new D1QB(env.DB)
-		// qb.setDebugger(true)
-
-		return router.handle(request, env, {
-			executionContext: executionContext,
-			qb: qb
-		})
-	},
-};
+// Export the Hono app
+export default app

@@ -1,16 +1,16 @@
-import {OpenAPIRoute, Query,} from "@cloudflare/itty-router-openapi";
-import {Env} from "./bindings";
-import {Context} from "./interfaces";
+import {z} from "zod";
+import {OpenAPIRoute} from "chanfana";
 
 export class GetSearch extends OpenAPIRoute {
-    static schema = {
+    schema = {
         tags: ["Search"],
         summary: "Search repositories by a query parameter",
-        parameters: {
-            q: Query(String, {
-                description: "The query to search for",
-                default: "cloudflare workers",
-            }),
+        request: {
+            query: z.object({
+                q: z.string().default('cloudflare workers').openapi({
+                    description: "The query to search for"
+                })
+            })
         },
         responses: {
             "200": {
@@ -18,11 +18,10 @@ export class GetSearch extends OpenAPIRoute {
                 schema: {
                     repos: [
                         {
-                            name: "itty-router-openapi",
-                            description:
-                                "OpenAPI 3 schema generator and validator for Cloudflare Workers",
-                            stars: "80",
-                            url: "https://github.com/cloudflare/itty-router-openapi",
+                            "name": "chanfana",
+                            "description": "OpenAPI 3 and 3.1 schema generator and validator for Hono, itty-router and more!",
+                            "stars": 287,
+                            "url": "https://github.com/cloudflare/chanfana"
                         },
                     ],
                 },
@@ -37,7 +36,10 @@ export class GetSearch extends OpenAPIRoute {
         },
     };
 
-    async handle(request: Request, env: Env, context: Context, data: Record<string, any>) {
+    async handle(c) {
+        // Validate inputs
+        const data = await this.getValidatedData<typeof this.schema>()
+
         const url = `https://api.github.com/search/repositories?q=${data.query.q}`;
 
         const resp = await fetch(url, {
@@ -61,6 +63,7 @@ export class GetSearch extends OpenAPIRoute {
             url: item.html_url,
         }));
 
+        // Returning an object, automatically gets converted into a json response
         return {
             repos: repos,
         };

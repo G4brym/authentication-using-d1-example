@@ -3,6 +3,11 @@
 This is the example code for the article `Implementing Register and Login in Cloudflare Workers with D1`
 that you can [read here](https://massadas.com/posts/implementing-register-and-login-in-workers-d1/).
 
+Technologies used:
+- [hono](https://github.com/honojs/hono) for routing
+- [chanfana](https://github.com/cloudflare/chanfana) for OpenAPI generation and validation
+- [workers-qb](https://github.com/G4brym/workers-qb) for querying D1
+
 ## Getting started with this project
 
 Install the dependencies
@@ -41,6 +46,8 @@ Start the project
 ```bash
 npm run serve
 ```
+
+Now open your browser at [http://localhost:8787/](http://localhost:8787/)
 
 
 ## Images

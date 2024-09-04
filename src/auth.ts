@@ -1,7 +1,7 @@
-import {Email, OpenAPIRoute} from '@cloudflare/itty-router-openapi';
 import {z} from 'zod'
-import {Env} from "./bindings";
-import {Context} from "./interfaces";
+import {OpenAPIRoute} from "chanfana";
+import {D1QB} from "workers-qb";
+import {User, UserSession} from "./types";
 
 
 async function hashPassword(password: string, salt: string): Promise<string> {
@@ -15,13 +15,21 @@ async function hashPassword(password: string, salt: string): Promise<string> {
 }
 
 export class AuthRegister extends OpenAPIRoute {
-    static schema = {
+    schema = {
         tags: ['Auth'],
         summary: 'Register user',
-        requestBody: {
-            name: String,
-            email: new Email(),
-            password: z.string().min(8).max(16),
+        request: {
+            body: {
+                content: {
+                    'application/json': {
+                        schema: z.object({
+                            name: z.string(),
+                            email: z.string().email(),
+                            password: z.string().min(8).max(16),
+                        }),
+                    },
+                },
+            },
         },
         responses: {
             '200': {
@@ -46,36 +54,40 @@ export class AuthRegister extends OpenAPIRoute {
         },
     };
 
-    async handle(request: Request, env: Env, context: Context, data: Record<string, any>) {
-        let user
+    async handle(c) {
+        // Validate inputs
+        const data = await this.getValidatedData<typeof this.schema>()
+
+        // Get query builder for D1
+        const qb = new D1QB(c.env.DB)
+
         try {
-            user = await context.qb.insert({
+            // Try to insert a new user
+            await qb.insert<{ email: string, name: string, }>({
                 tableName: 'users',
                 data: {
                     email: data.body.email,
                     name: data.body.name,
-                    password: await hashPassword(data.body.password, env.SALT_TOKEN),
+                    password: await hashPassword(data.body.password, c.env.SALT_TOKEN),
                 },
-                returning: '*'
             }).execute()
         } catch (e) {
-            return new Response(JSON.stringify({
+            // Insert failed due to unique constraint on the email column
+            return Response.json({
                 success: false,
                 errors: "User with that email already exists"
-            }), {
-                headers: {
-                    'content-type': 'application/json;charset=UTF-8',
-                },
+            }, {
                 status: 400,
             })
         }
 
+        // Returning an object, automatically gets converted into a json response
         return {
             success: true,
             result: {
                 user: {
-                    email: user.results.email,
-                    name: user.results.name,
+                    email: data.body.email,
+                    name: data.body.name,
                 }
             }
         }
@@ -84,12 +96,20 @@ export class AuthRegister extends OpenAPIRoute {
 
 
 export class AuthLogin extends OpenAPIRoute {
-    static schema = {
+    schema = {
         tags: ['Auth'],
         summary: 'Login user',
-        requestBody: {
-            email: new Email(),
-            password: z.string().min(8).max(16),
+        request: {
+            body: {
+                content: {
+                    'application/json': {
+                        schema: z.object({
+                            email: z.string().email(),
+                            password: z.string().min(8).max(16),
+                        }),
+                    },
+                },
+            },
         },
         responses: {
             '200': {
@@ -114,8 +134,15 @@ export class AuthLogin extends OpenAPIRoute {
         },
     };
 
-    async handle(request: Request, env: Env, context: Context, data: Record<string, any>) {
-        const user = await context.qb.fetchOne({
+    async handle(c) {
+        // Validate inputs
+        const data = await this.getValidatedData<typeof this.schema>()
+
+        // Get query builder for D1
+        const qb = new D1QB(c.env.DB)
+
+        // Try to fetch the user
+        const user = await qb.fetchOne<User>({
             tableName: 'users',
             fields: '*',
             where: {
@@ -125,36 +152,37 @@ export class AuthLogin extends OpenAPIRoute {
                 ],
                 params: [
                     data.body.email,
-                    await hashPassword(data.body.password, env.SALT_TOKEN)
+                    await hashPassword(data.body.password, c.env.SALT_TOKEN)
                 ]
             },
         }).execute()
 
+        // User not found, provably wrong password
         if (!user.results) {
-            return new Response(JSON.stringify({
+            return Response.json({
                 success: false,
                 errors: "Unknown user"
-            }), {
-                headers: {
-                    'content-type': 'application/json;charset=UTF-8',
-                },
+            }, {
                 status: 400,
             })
         }
 
+        // User found, define expiration date for new session token
         let expiration = new Date();
         expiration.setDate(expiration.getDate() + 7);
 
-        const session = await context.qb.insert({
+        // Insert session token
+        const session = await qb.insert<UserSession>({
             tableName: 'users_sessions',
             data: {
                 user_id: user.results.id,
-                token: await hashPassword((Math.random() + 1).toString(3), env.SALT_TOKEN),
+                token: await hashPassword((Math.random() + 1).toString(3), c.env.SALT_TOKEN),
                 expires_at: expiration.getTime()
             },
             returning: '*'
         }).execute()
 
+        // Returning an object, automatically gets converted into a json response
         return {
             success: true,
             result: {
@@ -177,12 +205,16 @@ export function getBearer(request: Request): null | string {
 }
 
 
-export async function authenticateUser(request: Request, env: any, context: any) {
-    const token = getBearer(request)
+export async function authenticateUser(c, next) {
+    const token = getBearer(c.req.raw)
+
+    // Get query builder for D1
+    const qb = new D1QB(c.env.DB)
+
     let session
 
     if (token) {
-        session = await context.qb.fetchOne({
+        session = await qb.fetchOne<UserSession>({
             tableName: 'users_sessions',
             fields: '*',
             where: {
@@ -199,16 +231,16 @@ export async function authenticateUser(request: Request, env: any, context: any)
     }
 
     if (!token || !session.results) {
-        return new Response(JSON.stringify({
+        return Response.json({
             success: false,
             errors: "Authentication error"
-        }), {
-            headers: {
-                'content-type': 'application/json;charset=UTF-8',
-            },
+        }, {
             status: 401,
         })
     }
 
-    env.user_uuid = session.results.user_uuid
+    // This will be accessible from the endpoints
+    c.user_uuid = session.results.user_uuid
+
+    await next()
 }

@@ -7,11 +7,12 @@
     "serve": "wrangler dev"
   },
   "dependencies": {
-    "@cloudflare/itty-router-openapi": "^1.0.3",
-    "workers-qb": "^1.1.1"
+    "chanfana": "^2.0.4",
+    "hono": "^4.5.11",
+    "workers-qb": "^1.5.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20230914.0",
-    "wrangler": "^3.8.0"
+    "@cloudflare/workers-types": "^4.20240903.0",
+    "wrangler": "^3.74.0"
   }
 }
