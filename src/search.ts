@@ -15,15 +15,20 @@ export class GetSearch extends OpenAPIRoute {
         responses: {
             "200": {
                 description: "Successful response",
+                content: {
+                    'application/json': {
+                        schema: z.object({
+                            success: z.boolean(),
+                            result: z.object({
+                                name: z.string(),
+                                description: z.string(),
+                                stars: z.number().int(),
+                                url: z.string()
+                            }).array()
+                        }),
+                    },
+                },
                 schema: {
-                    repos: [
-                        {
-                            "name": "chanfana",
-                            "description": "OpenAPI 3 and 3.1 schema generator and validator for Hono, itty-router and more!",
-                            "stars": 287,
-                            "url": "https://github.com/cloudflare/chanfana"
-                        },
-                    ],
                 },
             },
             "401": {
@@ -65,7 +70,8 @@ export class GetSearch extends OpenAPIRoute {
 
         // Returning an object, automatically gets converted into a json response
         return {
-            repos: repos,
+            success: true,
+            result: repos,
         };
     }
 }

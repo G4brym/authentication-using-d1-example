@@ -34,21 +34,29 @@ export class AuthRegister extends OpenAPIRoute {
         responses: {
             '200': {
                 description: "Successful response",
-                schema: {
-                    success: Boolean,
-                    result: {
-                        user: {
-                            email: String,
-                            name: String
-                        }
-                    }
+                content: {
+                    'application/json': {
+                        schema: z.object({
+                            success: z.boolean(),
+                            result: z.object({
+                                user: z.object({
+                                    email: z.string(),
+                                    name: z.string()
+                                })
+                            })
+                        }),
+                    },
                 },
             },
             '400': {
                 description: "Error",
-                schema: {
-                    success: Boolean,
-                    error: String
+                content: {
+                    'application/json': {
+                        schema: z.object({
+                            success: z.boolean(),
+                            error: z.string()
+                        }),
+                    },
                 },
             },
         },
@@ -114,21 +122,29 @@ export class AuthLogin extends OpenAPIRoute {
         responses: {
             '200': {
                 description: "Successful response",
-                schema: {
-                    success: Boolean,
-                    result: {
-                        session: {
-                            token: String,
-                            expires_at: String
-                        }
-                    }
+                content: {
+                    'application/json': {
+                        schema: z.object({
+                            success: z.boolean(),
+                            result: z.object({
+                                session: z.object({
+                                    token: z.string(),
+                                    expires_at: z.number().int()
+                                })
+                            })
+                        }),
+                    },
                 },
             },
             '400': {
                 description: "Error",
-                schema: {
-                    success: Boolean,
-                    error: String
+                content: {
+                    'application/json': {
+                        schema: z.object({
+                            success: z.boolean(),
+                            error: z.string()
+                        }),
+                    },
                 },
             },
         },
