@@ -1,7 +1,7 @@
 import {z} from 'zod'
 import {OpenAPIRoute} from "chanfana";
 import {D1QB} from "workers-qb";
-import {User, UserSession} from "./types";
+import {User, UserSession} from "../types";
 
 
 async function hashPassword(password: string, salt: string): Promise<string> {
@@ -255,8 +255,8 @@ export async function authenticateUser(c, next) {
         })
     }
 
-    // This will be accessible from the endpoints
-    c.user_uuid = session.results.user_uuid
+    // This will be accessible from the endpoints as c.get('user_uuid')
+    c.set('user_uuid', session.results.user_uuid)
 
     await next()
 }

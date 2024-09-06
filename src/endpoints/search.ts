@@ -28,8 +28,6 @@ export class GetSearch extends OpenAPIRoute {
                         }),
                     },
                 },
-                schema: {
-                },
             },
             "401": {
                 description: "Not authenticated",
@@ -45,9 +43,7 @@ export class GetSearch extends OpenAPIRoute {
         // Validate inputs
         const data = await this.getValidatedData<typeof this.schema>()
 
-        const url = `https://api.github.com/search/repositories?q=${data.query.q}`;
-
-        const resp = await fetch(url, {
+        const resp = await fetch(`https://api.github.com/search/repositories?q=${data.query.q}`, {
             headers: {
                 Accept: "application/vnd.github.v3+json",
                 "User-Agent": "RepoAI - Cloudflare Workers ChatGPT Plugin Example",

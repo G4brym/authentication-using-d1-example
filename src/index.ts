@@ -1,5 +1,5 @@
-import {GetSearch} from "./search";
-import {authenticateUser, AuthLogin, AuthRegister} from "./auth";
+import {GetSearch} from "./endpoints/search";
+import {authenticateUser, AuthLogin, AuthRegister} from "./foundation/auth";
 import {Hono} from "hono";
 import {fromHono} from "chanfana";
 import {Bindings} from "./types";
