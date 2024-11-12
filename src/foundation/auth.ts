@@ -233,7 +233,7 @@ export async function authenticateUser(c: AppContext, next: Next) {
     if (!token) {
         return Response.json({
             success: false,
-            errors: "Authentication error"
+            errors: "No Authorization token received"
         }, {
             status: 401,
         })
