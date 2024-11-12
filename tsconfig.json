@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "esnext",
 		//    "alwaysStrict": true,
-		"strict": false,
+		"strict": true,
 		"types": ["@cloudflare/workers-types"],
 		"allowJs": true,
 		"moduleResolution": "node"

@@ -1,5 +1,6 @@
 import {z} from "zod";
 import {OpenAPIRoute} from "chanfana";
+import {AppContext} from "../types";
 
 export class GetSearch extends OpenAPIRoute {
     schema = {
@@ -39,7 +40,7 @@ export class GetSearch extends OpenAPIRoute {
         },
     };
 
-    async handle(c) {
+    async handle(c: AppContext) {
         // Validate inputs
         const data = await this.getValidatedData<typeof this.schema>()
 

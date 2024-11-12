@@ -1,10 +1,16 @@
 import {D1Database} from '@cloudflare/workers-types'
+import {Context} from "hono";
 
-export type Bindings = {
+export type Env = {
     DB: D1Database
     SALT_TOKEN: string
-    user_uuid?: string
 }
+
+export type Vars = {
+    user_id?: number
+}
+
+export type AppContext = Context<{ Bindings: Env, Variables: Vars }>
 
 export type User = {
     id: number

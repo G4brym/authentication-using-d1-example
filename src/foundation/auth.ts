@@ -1,7 +1,8 @@
 import {z} from 'zod'
-import {OpenAPIRoute} from "chanfana";
+import {ApiException, OpenAPIRoute} from "chanfana";
 import {D1QB} from "workers-qb";
-import {User, UserSession} from "../types";
+import {AppContext, User, UserSession} from "../types";
+import {Next} from "hono";
 
 
 async function hashPassword(password: string, salt: string): Promise<string> {
@@ -62,7 +63,8 @@ export class AuthRegister extends OpenAPIRoute {
         },
     };
 
-    async handle(c) {
+    async handle(c: AppContext) {
+
         // Validate inputs
         const data = await this.getValidatedData<typeof this.schema>()
 
@@ -150,7 +152,7 @@ export class AuthLogin extends OpenAPIRoute {
         },
     };
 
-    async handle(c) {
+    async handle(c: AppContext) {
         // Validate inputs
         const data = await this.getValidatedData<typeof this.schema>()
 
@@ -198,6 +200,10 @@ export class AuthLogin extends OpenAPIRoute {
             returning: '*'
         }).execute()
 
+        if (!session.results) {
+            throw new ApiException('Unable to create user session')
+        }
+
         // Returning an object, automatically gets converted into a json response
         return {
             success: true,
@@ -221,32 +227,10 @@ export function getBearer(request: Request): null | string {
 }
 
 
-export async function authenticateUser(c, next) {
+export async function authenticateUser(c: AppContext, next: Next) {
     const token = getBearer(c.req.raw)
 
-    // Get query builder for D1
-    const qb = new D1QB(c.env.DB)
-
-    let session
-
-    if (token) {
-        session = await qb.fetchOne<UserSession>({
-            tableName: 'users_sessions',
-            fields: '*',
-            where: {
-                conditions: [
-                    'token = ?1',
-                    'expires_at > ?2',
-                ],
-                params: [
-                    token,
-                    new Date().getTime()
-                ]
-            },
-        }).execute()
-    }
-
-    if (!token || !session.results) {
+    if (!token) {
         return Response.json({
             success: false,
             errors: "Authentication error"
@@ -255,8 +239,35 @@ export async function authenticateUser(c, next) {
         })
     }
 
-    // This will be accessible from the endpoints as c.get('user_uuid')
-    c.set('user_uuid', session.results.user_uuid)
+    // Get query builder for D1
+    const qb = new D1QB(c.env.DB)
+
+    const session = await qb.fetchOne<UserSession>({
+        tableName: 'users_sessions',
+        fields: '*',
+        where: {
+            conditions: [
+                'token = ?1',
+                'expires_at > ?2',
+            ],
+            params: [
+                token,
+                new Date().getTime()
+            ]
+        },
+    }).execute()
+
+    if (!session.results) {
+        return Response.json({
+            success: false,
+            errors: "Authentication error"
+        }, {
+            status: 401,
+        })
+    }
+
+    // This will be accessible from the endpoints as c.get('user_id')
+    c.set('user_id', session.results.user_id)
 
     await next()
 }

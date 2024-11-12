@@ -2,10 +2,10 @@ import {GetSearch} from "./endpoints/search";
 import {authenticateUser, AuthLogin, AuthRegister} from "./foundation/auth";
 import {Hono} from "hono";
 import {fromHono} from "chanfana";
-import {Bindings} from "./types";
+import {Env} from "./types";
 
 // Start a Hono app
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono<{ Bindings: Env }>()
 
 // Setup OpenAPI registry
 const openapi = fromHono(app, {
