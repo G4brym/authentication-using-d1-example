@@ -1,11 +1,13 @@
 {
 	"compilerOptions": {
 		"target": "esnext",
-		//    "alwaysStrict": true,
+		"lib": ["esnext"],
 		"strict": true,
 		"types": ["@cloudflare/workers-types"],
 		"allowJs": true,
-		"moduleResolution": "node"
+		"moduleResolution": "bundler",
+		"skipLibCheck": true,
+		"noEmit": true
 	},
-	"include": ["src"]
+	"include": ["src", "vitest.config.ts"]
 }

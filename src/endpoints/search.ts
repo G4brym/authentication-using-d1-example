@@ -1,5 +1,4 @@
-import {z} from "zod";
-import {OpenAPIRoute} from "chanfana";
+import {Arr, Bool, Int, Obj, OpenAPIRoute, Str} from "chanfana";
 import {AppContext} from "../types";
 
 export class GetSearch extends OpenAPIRoute {
@@ -7,10 +6,8 @@ export class GetSearch extends OpenAPIRoute {
         tags: ["Search"],
         summary: "Search repositories by a query parameter",
         request: {
-            query: z.object({
-                q: z.string().default('cloudflare workers').openapi({
-                    description: "The query to search for"
-                })
+            query: Obj({
+                q: Str({default: 'cloudflare workers', description: "The query to search for"})
             })
         },
         responses: {
@@ -18,14 +15,14 @@ export class GetSearch extends OpenAPIRoute {
                 description: "Successful response",
                 content: {
                     'application/json': {
-                        schema: z.object({
-                            success: z.boolean(),
-                            result: z.object({
-                                name: z.string(),
-                                description: z.string(),
-                                stars: z.number().int(),
-                                url: z.string()
-                            }).array()
+                        schema: Obj({
+                            success: Bool(),
+                            result: Arr(Obj({
+                                name: Str(),
+                                description: Str(),
+                                stars: Int(),
+                                url: Str()
+                            }))
                         }),
                     },
                 },

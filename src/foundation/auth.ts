@@ -1,8 +1,8 @@
-import {z} from 'zod'
-import {ApiException, OpenAPIRoute} from "chanfana";
+import {ApiException, Bool, contentJson, Email, Int, Obj, OpenAPIRoute, Str} from "chanfana";
 import {D1QB} from "workers-qb";
 import {AppContext, User, UserSession} from "../types";
 import {Next} from "hono";
+import z from "zod";
 
 
 async function hashPassword(password: string, salt: string): Promise<string> {
@@ -20,29 +20,23 @@ export class AuthRegister extends OpenAPIRoute {
         tags: ['Auth'],
         summary: 'Register user',
         request: {
-            body: {
-                content: {
-                    'application/json': {
-                        schema: z.object({
-                            name: z.string(),
-                            email: z.string().email(),
-                            password: z.string().min(8).max(16),
-                        }),
-                    },
-                },
-            },
+            body: contentJson(z.object({
+                name: z.string(),
+                email: Email(),
+                password: Str().min(8).max(16),
+            })),
         },
         responses: {
             '200': {
                 description: "Successful response",
                 content: {
                     'application/json': {
-                        schema: z.object({
-                            success: z.boolean(),
-                            result: z.object({
-                                user: z.object({
-                                    email: z.string(),
-                                    name: z.string()
+                        schema: Obj({
+                            success: Bool(),
+                            result: Obj({
+                                user: Obj({
+                                    email: Str(),
+                                    name: Str()
                                 })
                             })
                         }),
@@ -53,9 +47,9 @@ export class AuthRegister extends OpenAPIRoute {
                 description: "Error",
                 content: {
                     'application/json': {
-                        schema: z.object({
-                            success: z.boolean(),
-                            error: z.string()
+                        schema: Obj({
+                            success: Bool(),
+                            error: Str()
                         }),
                     },
                 },
@@ -67,28 +61,33 @@ export class AuthRegister extends OpenAPIRoute {
 
         // Validate inputs
         const data = await this.getValidatedData<typeof this.schema>()
+        const body = data.body
 
         // Get query builder for D1
         const qb = new D1QB(c.env.DB)
 
         try {
             // Try to insert a new user
-            await qb.insert<{ email: string, name: string, }>({
+            await qb.insert({
                 tableName: 'users',
                 data: {
-                    email: data.body.email,
-                    name: data.body.name,
-                    password: await hashPassword(data.body.password, c.env.SALT_TOKEN),
+                    email: body.email,
+                    name: body.name,
+                    password: await hashPassword(body.password, c.env.SALT_TOKEN),
                 },
             }).execute()
         } catch (e) {
-            // Insert failed due to unique constraint on the email column
-            return Response.json({
-                success: false,
-                errors: "User with that email already exists"
-            }, {
-                status: 400,
-            })
+            if ((e as Error).message.includes("UNIQUE constraint failed")) {
+                // Insert failed due to unique constraint on the email column
+                return Response.json({
+                    success: false,
+                    errors: "User with that email already exists"
+                }, {
+                    status: 400,
+                })
+            }
+            console.error(e)
+            throw e
         }
 
         // Returning an object, automatically gets converted into a json response
@@ -96,8 +95,8 @@ export class AuthRegister extends OpenAPIRoute {
             success: true,
             result: {
                 user: {
-                    email: data.body.email,
-                    name: data.body.name,
+                    email: body.email,
+                    name: body.name,
                 }
             }
         }
@@ -114,8 +113,8 @@ export class AuthLogin extends OpenAPIRoute {
                 content: {
                     'application/json': {
                         schema: z.object({
-                            email: z.string().email(),
-                            password: z.string().min(8).max(16),
+                            email: Email(),
+                            password: Str().min(8).max(16),
                         }),
                     },
                 },
@@ -127,11 +126,11 @@ export class AuthLogin extends OpenAPIRoute {
                 content: {
                     'application/json': {
                         schema: z.object({
-                            success: z.boolean(),
+                            success: Bool(),
                             result: z.object({
                                 session: z.object({
-                                    token: z.string(),
-                                    expires_at: z.number().int()
+                                    token: Str(),
+                                    expires_at: Int()
                                 })
                             })
                         }),
@@ -142,9 +141,9 @@ export class AuthLogin extends OpenAPIRoute {
                 description: "Error",
                 content: {
                     'application/json': {
-                        schema: z.object({
-                            success: z.boolean(),
-                            error: z.string()
+                        schema: Obj({
+                            success: Bool(),
+                            error: Str()
                         }),
                     },
                 },
@@ -155,6 +154,7 @@ export class AuthLogin extends OpenAPIRoute {
     async handle(c: AppContext) {
         // Validate inputs
         const data = await this.getValidatedData<typeof this.schema>()
+        const body = data.body
 
         // Get query builder for D1
         const qb = new D1QB(c.env.DB)
@@ -169,8 +169,8 @@ export class AuthLogin extends OpenAPIRoute {
                     'password = ?2'
                 ],
                 params: [
-                    data.body.email,
-                    await hashPassword(data.body.password, c.env.SALT_TOKEN)
+                    body.email,
+                    await hashPassword(body.password, c.env.SALT_TOKEN)
                 ]
             },
         }).execute()
