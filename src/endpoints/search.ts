@@ -41,7 +41,7 @@ export class GetSearch extends OpenAPIRoute {
         // Validate inputs
         const data = await this.getValidatedData<typeof this.schema>()
 
-        const resp = await fetch(`https://api.github.com/search/repositories?q=${data.query.q}`, {
+        const resp = await fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(data.query.q as string)}`, {
             headers: {
                 Accept: "application/vnd.github.v3+json",
                 "User-Agent": "RepoAI - Cloudflare Workers ChatGPT Plugin Example",
