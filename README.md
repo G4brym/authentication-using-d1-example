@@ -74,9 +74,9 @@ A brief overview of important files and directories:
 
 ## Available Endpoints
 This example application exposes the following API endpoints:
-- `POST /register`: Allows new users to register. Requires `name`, `email`, and `password` in the request body.
-- `POST /login`: Allows existing users to log in. Requires `email` and `password` in the request body. Returns a session token.
-- `GET /search`: An example protected endpoint that requires a valid Bearer token (obtained from login) in the `Authorization` header. It searches GitHub repositories based on a query parameter `q`.
+- `POST /api/auth/register`: Allows new users to register. Requires `name`, `email`, and `password` in the request body.
+- `POST /api/auth/login`: Allows existing users to log in. Requires `email` and `password` in the request body. Returns a session token.
+- `GET /api/search`: An example protected endpoint that requires a valid Bearer token (obtained from login) in the `Authorization` header. It searches GitHub repositories based on a query parameter `q`.
 
 The authentication logic (registration, login, and token validation) is detailed in the 'Authentication Flow' diagram below.
 

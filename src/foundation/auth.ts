@@ -175,7 +175,7 @@ export class AuthLogin extends OpenAPIRoute {
             },
         }).execute()
 
-        // User not found, provably wrong password
+        // User not found, probably wrong password
         if (!user.results) {
             return Response.json({
                 success: false,
